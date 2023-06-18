@@ -1,0 +1,21 @@
+#!/usr/local/bin/bpftrace
+
+BEGIN
+{
+    printf("reading load average...\n");
+}
+
+interval:s:1
+{
+    $avenrun = kaddr("avenrun");
+    $load1 = *$avenrun;
+    $load5 = *($avenrun + 8);
+    $load15 = *($avenrun + 16);
+    time("%H:%M:%S ");
+
+    printf("load average: %d.%0.3d %d.%0.3d %d.%0.3d \n",
+        ($load1 >> 11), (($load1 & ((1 << 11) - 1)) * 1000) >> 11,
+        ($load5 >> 11), (($load5 & ((1 << 11) - 1)) * 1000) >> 11,
+        ($load15 >> 11), (($load15 & ((1 << 11) - 1)) * 1000) >> 11
+    );
+}

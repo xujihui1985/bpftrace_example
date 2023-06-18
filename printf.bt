@@ -1,0 +1,11 @@
+#!/usr/local/bin/bpftrace
+
+BEGIN
+{
+    printf("printf\n");
+}
+
+tracepoint:syscalls:sys_enter_execve
+{
+    printf("%16s %-6d %s \n", comm, pid, str(cgroup));
+}

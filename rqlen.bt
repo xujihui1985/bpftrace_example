@@ -1,0 +1,20 @@
+#!/usr/local/bin/bpftrace
+#include <linux/sched.h>
+
+BEGIN
+{
+    printf("Offset of flags: %ld\n", offsetof(struct task_struct, on_rq));
+	printf("Offset of comm: %ld\n", offsetof(*curtask, comm));
+    printf("run queue length\n");
+}
+
+profile:hz:99
+{
+    $task = (struct task_struct *)curtask;
+    $on_rq = curtask + offsetof(struct task_struct, on_rq);
+    printf("%d\n", $on_rq);
+    $my_q = $task->se.cfs_rq;
+    $len = $my_q->nr_running;
+    $len = $len > 0 ? $len - 1 : 0;
+    @runqlen = hist($len);
+}

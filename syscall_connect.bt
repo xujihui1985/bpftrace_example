@@ -1,0 +1,17 @@
+#!/usr/local/bin/bpftrace
+
+#include <linux/socket.h>
+
+
+tracepoint:syscalls:sys_enter_connect
+{
+    $sockaddr = (struct sockaddr_in*)args->uservaddr;
+    $port = (($sockaddr->sin_port & 0x00ff) << 8) | (($sockaddr->sin_port & 0xff00) >> 8);
+    $addr = $sockaddr->sin_addr.s_addr;
+    if ($port == 80) {
+        printf("connect to ip %s\n", ntop($addr));
+        printf("comm=%s pid=%d fd=%d port=%d\n", comm, pid, args->fd, $port);
+        @p[comm,pid, $port] = count();
+    }
+
+}

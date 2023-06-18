@@ -1,0 +1,14 @@
+#!/usr/local/bin/bpftrace
+
+BEGIN
+{
+    // need to use str() to convert args to string
+    //  ./args.bt 1 hello
+    // bpftrace -e 'BEGIN { printf ("hello %s\n", str(arg1))}'
+    printf("args pid %d %s\n", $1, str($2));
+}
+
+kprobe:vfs_read
+{
+    printf("%16s %-6d \n", comm, pid);
+}

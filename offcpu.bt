@@ -1,0 +1,26 @@
+#!/usr/local/bin/bpftrace
+#include <linux/sched.h>
+
+BEGIN
+{
+    printf("offcpu \n");
+}
+
+kprobe:finish_task_switch
+{
+    $prev = (struct task_struct *)arg0;
+    if ($1 == 0 || $prev->tgid == $1) {
+        @start[$prev->pid] = nsecs;
+    }
+
+    $last = @start[pid];
+    if ($last != 0) {
+        @[kstack, ustack, comm] = sum(nsecs - $last);
+        delete(@start[pid]);
+    }
+}
+
+END 
+{
+    clear(@start)
+}

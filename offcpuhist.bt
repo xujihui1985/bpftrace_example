@@ -1,0 +1,29 @@
+#!/usr/local/bin/bpftrace
+
+#include <linux/sched.h>
+
+BEGIN
+{
+    printf("trace off-cpu stack\n");
+}
+
+//static struct rq *finish_task_switch(struct task_struct *prev)
+tracepoint:sched:sched_switch
+{
+    $prev = args->prev_pid;
+    if ($1 == 0 || $prev == $1) {
+        @start[$prev] = nsecs;
+    }
+
+    $last = @start[tid];
+    if ($last != 0) {
+        @[kstack, ustack, comm, tid] = hist(nsecs - $last);
+        delete(@start[tid]);
+    }
+}
+
+END
+{
+    clear(@start);
+}
+

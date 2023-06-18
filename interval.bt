@@ -1,0 +1,18 @@
+#!/usr/local/bin/bpftrace
+
+
+tracepoint:block:block_rq_i*
+{
+    @[probe] = count();
+}
+tracepoint:syscalls:sys_exit_read
+/args->ret > 0/
+{
+    @bytes[pid] = sum(args->ret);
+}
+
+interval:s:1 {
+    printf("---------------------\n");
+    print(@);
+    clear(@);
+}

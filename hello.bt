@@ -1,0 +1,20 @@
+#!/usr/local/bin/bpftrace
+
+BEGIN
+{
+    $x = 1; // declare a local variable
+    // @ is map variable, can be used for global storage, passing data between probes
+    // @start[tid] = nsecs  used as hash map, and nsecs is built-in variable
+    // @path[pid, $fd] = str(arg0) multi key map, pid is built-in variable, $fd is local variable
+    // @x = count()  count() is built-in function
+    // @y = sum(arg0) sum() is built-in function
+    // @z = hist($x)
+    // delete(@start[tid]) // delete a map entry
+    printf("hello world %s \n", str($x));
+}
+
+interval:s:1
+{
+    @count++;
+    printf("hello world %d \n", @count);
+}

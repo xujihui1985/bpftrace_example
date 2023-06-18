@@ -1,0 +1,21 @@
+#include <linux/fs.h>
+
+BEGIN
+{
+    printf("trace vfs read\n");
+}
+
+kprobe:vfs_read
+{
+    @[func] = count();
+}
+
+interval:s:1
+{
+    time(); print(@); clear(@);
+}
+
+END
+{
+    clear(@)
+}

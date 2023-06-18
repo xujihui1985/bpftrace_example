@@ -1,0 +1,27 @@
+#!/usr/local/bin/bpftrace
+
+#include <linux/sched.h>
+#include <linux/nsproxy.h>
+#include <linux/utsname.h>
+#include <linux/pid_namespace.h>
+
+BEGIN
+{
+    printf("trace pid ns switch\n");
+}
+
+kprobe:finish_task_switch
+{
+        $prev = (struct task_struct *)arg0;
+        $curr = (struct task_struct *)curtask;
+        $prev_pidns = $prev->nsproxy->pid_ns_for_children->ns.inum;
+        $curr_pidns = $curr->nsproxy->pid_ns_for_children->ns.inum;
+        if ($prev_pidns != $curr_pidns) {
+                @[$prev_pidns, $prev->nsproxy->uts_ns->name.nodename] = count();
+        }
+}
+
+END
+{
+        printf("\nVictim PID namespace switch counts [PIDNS, nodename]:\n");
+}

@@ -1,0 +1,20 @@
+#!/usr/local/bin/bpftrace
+
+BEGIN
+{
+    printf("vfs read latency\n");
+}
+
+kprobe:vfs_read
+{
+    // record start time
+    @start[tid] = nsecs;
+}
+
+kretprobe:vfs_read
+/@start[tid]/
+{
+    $duration_us = (nsecs - @start[tid]) / 1000;
+    @us[pid, comm] = hist($duration_us);
+    delete(@start[tid]);
+}

@@ -1,0 +1,12 @@
+#!/usr/local/bin/bpftrace
+
+BEGIN
+{
+    printf("kernel stack\n");
+}
+
+tracepoint:block:block_rq_insert
+{
+    // record start time
+    @[kstack(16), comm] = count();
+}
