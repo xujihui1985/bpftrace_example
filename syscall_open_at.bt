@@ -1,0 +1,10 @@
+#!/usr/local/bin/bpftrace
+
+
+tracepoint:syscalls:sys_enter_openat
+/pid == <pid>/
+{
+    $filename = args->filename;
+    @p[pid, str($filename)] = count();
+}
+
