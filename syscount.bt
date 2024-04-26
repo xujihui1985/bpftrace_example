@@ -1,0 +1,10 @@
+#!/usr/local/bin/bpftrace
+
+tracepoint:syscalls:sys_enter_*,
+/pid == 4155006/
+{
+  @[probe] = count();
+}
+
+interval:s:10 { exit(); }
+

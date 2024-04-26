@@ -1,0 +1,15 @@
+tracepoint:syscalls:sys_enter_writev,
+/pid == 4155006/
+{
+  @start[tid] = nsecs;
+}
+
+tracepoint:syscalls:sys_exit_writev,
+/@start[tid]/
+{
+    $duration_us = (nsecs - @start[tid]) / 1000;
+    @us[comm] = hist($duration_us);
+    delete(@start[tid]);
+}
+
+

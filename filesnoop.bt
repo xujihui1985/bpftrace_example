@@ -1,0 +1,41 @@
+#!/usr/bin/env bpftrace
+
+#include <linux/sched.h>
+#include <linux/fs.h>
+#include <linux/fdtable.h>
+
+tracepoint:syscalls:sys_enter_write*
+{
+    $task = (struct task_struct *)curtask;
+    $file = (struct file *) *($task->files->fdt->fd + args->fd);
+    if (strncmp(str($file->f_path.dentry->d_name.name), "resolv.conf", 11)==0) {
+      @filename["write", str($file->f_path.dentry->d_name.name), pid, comm] = count();
+    }
+}
+
+tracepoint:syscalls:sys_enter_open
+{
+   $file_name = str(args->filename);
+   if (strncmp($file_name, "resolv.conf", 11) == 0) {
+     @filename["open_syscall", $file_name, pid, comm] = count();
+   }
+}
+
+tracepoint:syscalls:sys_enter_rename
+{
+   $file_path = str(args->newname);
+   if (strncmp($file_path, "/etc/resolv.conf", 16) == 0) {
+     printf("time %s rename resolv.conf pid %d comm [%s] parent_pid %d parent_comm [%s]\n", strftime("%H:%M:%S", nsecs), pid, comm, curtask->parent->pid, curtask->parent->comm);
+     @filename["rename_syscall", $file_path, pid, comm] = count();
+   }
+}
+
+kprobe:vfs_open
+{
+    $file = ((struct file *)arg0)->f_path.dentry->d_name.name;
+    if (strncmp(str($file), "resolv.conf", 11) == 0) {
+        @filename["vfs", str($file), pid, comm] = count();
+    }
+}
+
+
